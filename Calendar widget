@@ -1,0 +1,321 @@
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: teal; icon-glyph: magic;
+const spaceDays = 6
+const dayFont = new Font('verdana', 10)
+const dayColor = new Color('#000')
+const todayColor = new Color('#fff')
+const todayHilite = new Color('#000')
+const dayXColor = new Color('#555', 0.5)
+const monthColor = new Color('#CC3F0C')
+const yearColor = new Color('#9A6D38')
+const daySpColor = new Color('#000', 0.5)
+// Icon made by Freepik from www.flaticon.com
+const holidays = {
+  '0': [{
+    'date': '1',
+    'url': 'https://i.ibb.co/4fd1Y6Z/confetti.png'
+  }],
+  '1': [{
+    'date': '14',
+    'url': 'https://i.ibb.co/vPyr7fv/lover-2.png'
+  }],
+  '3': [{
+    'date': '5',
+    'url': 'https://i.ibb.co/yn4bK70/easter-egg.png'
+  }],
+  '4': [{
+    'date': '3',
+    'url': 'https://i.ibb.co/yBJqTXs/cocktail-drink.png'
+  }, {
+    'date': '31',
+    'url': 'https://i.ibb.co/v3nRwDZ/surfboard.png'
+  }],
+  '6': [{
+    'date': '4',
+    'url': 'https://i.ibb.co/KyJS759/usa.png'
+  }],
+  '7': [{
+    'date': '30',
+    'url': 'https://i.ibb.co/gyCcp5F/travel-insurance.png',
+    'author': 'Smashicons'
+  }],
+  '9': [{
+    'date': '31',
+    'url': 'https://i.ibb.co/rx0Bchd/pumpkin.png'
+  }],
+  '10': [{
+    'date': '25',
+    'url': 'https://i.ibb.co/VD8Q2bb/turkey.png'
+  }],
+  '11': [{
+    'date': '25',
+    'url': 'https://i.ibb.co/fNPwjrY/christmas-wreath.png',
+    'author': 'iconixar'
+  }]
+}
+
+let thisDay = new Date()
+let firstWkdayOfMonth = (new Date(thisDay.getMonth())).getDay()
+let thisDayDate = thisDay.getDate()
+let thisMonth = thisDay.getMonth()
+let thisYear = thisDay.getFullYear()
+
+//testing only
+/*
+let thisDay = new Date('2020-02-08')
+let firstWkdayOfMonth = 5
+let thisDayDate = 5
+let thisMonth = 4
+let thisYear = 2020
+*/
+
+let februaryDays = (leapYear(thisDay.getFullYear())) ? 29 : 28;
+
+var months = [
+  ['January', 31],
+  ['February', februaryDays],
+  ['March', 31],
+  ['April', 30],
+  ['May', 31],
+  ['June', 30],
+  ['July', 31],
+  ['August', 31],
+  ['September', 30],
+  ['October', 31],
+  ['November', 30],
+  ['December', 31]
+]
+
+const spaceMonthYear = months[thisMonth][0].length < 5 ? 40: 10 
+
+// Choose Sunday first wkdays[0] or Monday first
+const weekDays = [
+  [0, ['S', 'M', 'T', 'W', 'T', 'F', 'S']],
+  [1, ['M', 'T', 'W', 'T', 'F', 'S', 'S']]
+]
+
+let wkDayFirst = weekDays[1]
+
+let mondayOffset = wkDayFirst[0] ? firstWkdayOfMonth - 1 : firstWkdayOfMonth
+if (mondayOffset < 0) {mondayOffset = 6}
+let prevMonth = ((thisMonth - 1) < 0) ? 11 : (thisMonth - 1)
+let prevMonthTotalDays = months[prevMonth][1]
+let prevMonthDays = []
+
+for (let i = 0; i < mondayOffset; i++) {
+  prevMonthDays.push(prevMonthTotalDays - i)
+}
+let showPrevMdays = prevMonthDays.reverse()
+let daysInMonth = months[thisMonth][1]
+
+let widget = new ListWidget()
+widget.setPadding(0, 7, 0, 0)
+
+widget.backgroundColor = new Color('#fff', 1)
+
+let monthYearRow = widget.addStack()
+monthYearRow.layoutHorizontally()
+let monthTxt = monthYearRow.addText(months[thisMonth][0].toUpperCase())
+monthTxt.textColor = monthColor
+monthYearRow.addSpacer(spaceMonthYear)
+let yearTxt = monthYearRow.addText(thisYear.toString())
+yearTxt.textColor = yearColor
+widget.addSpacer(10)
+
+wkDayRow = widget.addStack()
+wkDayRow.layoutHorizontally()
+wkDayRow.setPadding(0, 2, 0, 0)
+for (let i = 0; i < 7; i++) {
+  let wkdayTxt = wkDayRow.addText(wkDayFirst[1][i])
+  wkdayTxt.font = dayFont
+  wkdayTxt.textColor = dayColor
+  wkdayTxt.centerAlignText()
+  wkDayRow.addSpacer(13)
+}
+
+row1 = widget.addStack()
+row2 = widget.addStack()
+row3 = widget.addStack()
+row4 = widget.addStack()
+row5 = widget.addStack()
+row6 = widget.addStack()
+
+let isSpecial = holidays.hasOwnProperty(thisMonth.toString())
+
+let dayOne = 1
+
+let strThisMonth = thisMonth.toString()
+
+for (let i = 0; i < 37; i++) {
+  if (i < mondayOffset) {
+    addDaysRow(showPrevMdays[i].toString(), dayXColor, row1)
+    row1.addSpacer(spaceDays)
+    dayOne--
+  } 
+  else {
+    let strDayOne = dayOne.toString()
+    if (isSpecial) {
+      if (i < 7) {
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row1, holidayImg)
+        }
+        else {
+          addDaysRow(strDayOne, dayColor, row1)
+        }
+        row1.addSpacer(spaceDays)
+      }
+      else if (i < 14) {
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row2, holidayImg)
+        }
+        else {
+          addDaysRow(strDayOne, dayColor, row2)
+        }
+        row2.addSpacer(spaceDays)
+      }
+      else if (i < 21) {
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row3, holidayImg)
+        }
+        else {
+          addDaysRow(strDayOne, dayColor, row3)
+        }
+        row3.addSpacer(spaceDays)
+      }
+      else if (i < 28){
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row4, holidayImg)
+        }
+        else {
+          addDaysRow(strDayOne, dayColor, row4)
+        }
+        row4.addSpacer(spaceDays)
+      }
+      else if (i < 35) {
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row5, holidayImg)
+        }
+        else {
+          if (dayOne <= daysInMonth) {
+            addDaysRow(strDayOne, dayColor, row5)
+            row5.addSpacer(spaceDays)
+          }
+        }
+      }
+      else if (i < 31 + mondayOffset) {
+        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
+        if (typeof(holidayUrl[0]) != 'undefined') {
+          let holidayImg = await getBG(holidayUrl[0].url)
+          addDaysRow(strDayOne, Color.darkGray(), row6, holidayImg)
+        }
+        else {
+          addDaysRow(strDayOne, dayColor, row6)
+        }
+        row6.addSpacer(spaceDays)
+      }
+    }
+    else {
+      let strDayOne = dayOne.toString()
+      if (i < 7) {
+        addDaysRow(strDayOne, dayColor, row1)
+      }
+      else if (i < 14) {
+        addDaysRow(strDayOne, dayColor, row2)
+      }
+      else if (i < 21) {
+        addDaysRow(strDayOne, dayColor, row3)
+      }
+      else if (i < 28){
+        addDaysRow(strDayOne, dayColor, row4)
+      }
+      else if (i < 35) {
+        if (dayOne <= daysInMonth) {
+          addDaysRow(strDayOne, dayColor, row5)
+        }
+      }
+      else if (i < 31 + mondayOffset) {
+        addDaysRow(strDayOne, dayColor, row6)
+      }
+    }
+  }
+  dayOne++
+}
+
+function addDaysRow(dayNum, color, row, img=false) {
+  let s = row.addStack()
+  s.layoutHorizontally()
+  s.size = new Size(15, 15)
+
+  if (dayNum == thisDayDate) {
+    const highlightedDate = dayHighlight(dayNum, todayColor, todayHilite)
+    s.addImage(highlightedDate);
+  } 
+  else if (img) {
+    let holimg = daySpecial(dayNum, color, img)
+    s.addImage(holimg)
+  }
+  else {
+    let dayShow = s.addText(dayNum)
+    dayShow.font = dayFont
+    dayShow.textColor = color
+    dayShow.centerAlignText()
+  }
+}
+
+function leapYear(year) {
+  return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+}
+
+function dayHighlight(day, dayColor, hilite) {
+  const drawToday = new DrawContext();
+  const size = 35;
+  drawToday.size = new Size(size, size);
+  drawToday.opaque = false;
+  drawToday.setFillColor(hilite);
+  drawToday.fillEllipse(new Rect(2, 0, size - 3, size - 3));
+  drawToday.setFont(new Font('verdana', 25));
+  drawToday.setTextAlignedCenter();
+  drawToday.setTextColor(dayColor);
+  drawToday.drawTextInRect(day, new Rect(1, -1, size, size));
+  const currentDayImg = drawToday.getImage();
+  return currentDayImg;
+}
+
+function daySpecial(day, spColor, img) {
+  const drawSpecial = new DrawContext();
+  const size = 35;
+  drawSpecial.size = new Size(size, size);
+  drawSpecial.opaque = false;
+  drawSpecial.setFont(new Font('verdana', 25));
+  drawSpecial.setTextAlignedCenter();
+  drawSpecial.drawImageInRect(img, new Rect(0, 0, size, size))
+  drawSpecial.setTextColor(spColor);
+  drawSpecial.drawTextInRect(day, new Rect(0, 0, size, size));
+  const currentDayImg = drawSpecial.getImage();
+  return currentDayImg;
+}
+
+async function getBG(url) {
+  let imgReq = new Request(url)
+  return await imgReq.loadImage()
+}
+
+Script.setWidget(widget)
+Script.complete()
+
+if (config.runsInWidget) {
+  widget.presentSmall()
+} else {
+  widget.presentSmall()
+}

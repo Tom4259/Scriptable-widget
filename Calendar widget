@@ -1,6 +1,3 @@
-// Variables used by Scriptable.
-// These must be at the very top of the file. Do not edit.
-// icon-color: teal; icon-glyph: magic;
 const spaceDays = 6
 const dayFont = new Font('verdana', 10)
 const dayColor = new Color('#000')
@@ -11,48 +8,24 @@ const monthColor = new Color('#CC3F0C')
 const yearColor = new Color('#9A6D38')
 const daySpColor = new Color('#000', 0.5)
 // Icon made by Freepik from www.flaticon.com
-const holidays = {
-  '0': [{
-    'date': '1',
-    'url': 'https://i.ibb.co/4fd1Y6Z/confetti.png'
-  }],
-  '1': [{
-    'date': '14',
-    'url': 'https://i.ibb.co/vPyr7fv/lover-2.png'
-  }],
-  '3': [{
-    'date': '5',
-    'url': 'https://i.ibb.co/yn4bK70/easter-egg.png'
-  }],
-  '4': [{
-    'date': '3',
-    'url': 'https://i.ibb.co/yBJqTXs/cocktail-drink.png'
-  }, {
-    'date': '31',
-    'url': 'https://i.ibb.co/v3nRwDZ/surfboard.png'
-  }],
-  '6': [{
-    'date': '4',
-    'url': 'https://i.ibb.co/KyJS759/usa.png'
-  }],
-  '7': [{
-    'date': '30',
-    'url': 'https://i.ibb.co/gyCcp5F/travel-insurance.png',
-    'author': 'Smashicons'
-  }],
-  '9': [{
-    'date': '31',
-    'url': 'https://i.ibb.co/rx0Bchd/pumpkin.png'
-  }],
-  '10': [{
-    'date': '25',
-    'url': 'https://i.ibb.co/VD8Q2bb/turkey.png'
-  }],
-  '11': [{
-    'date': '25',
-    'url': 'https://i.ibb.co/fNPwjrY/christmas-wreath.png',
-    'author': 'iconixar'
-  }]
+let FORCE_IMAGE_UPDATE = true
+
+async function getImage(url, fileName) {
+  let files = FileManager.iCloud()
+  const path = files.joinPath(files.documentsDirectory(), 'holidayCal/' + fileName + '.png')
+  let hasImage = files.fileExists(path)
+  let holidayImg
+  
+  if (FORCE_IMAGE_UPDATE || !hasImage) {
+    holidayImg = await getBG(url)
+    files.writeImage(path,holidayImg)
+    console.log('fetched: '+path)
+  }
+  else {
+    holidayImg = files.readImage(path)
+    console.log('no fetch')
+  }
+  return holidayImg
 }
 
 let thisDay = new Date()
@@ -64,30 +37,30 @@ let thisYear = thisDay.getFullYear()
 //testing only
 /*
 let thisDay = new Date('2020-02-08')
-let firstWkdayOfMonth = 5
-let thisDayDate = 5
-let thisMonth = 4
+let firstWkdayOfMonth = 6
+let thisDayDate = 15
+let thisMonth = 7
 let thisYear = 2020
 */
 
 let februaryDays = (leapYear(thisDay.getFullYear())) ? 29 : 28;
 
-var months = [
-  ['January', 31],
-  ['February', februaryDays],
-  ['March', 31],
-  ['April', 30],
-  ['May', 31],
-  ['June', 30],
-  ['July', 31],
-  ['August', 31],
-  ['September', 30],
-  ['October', 31],
-  ['November', 30],
-  ['December', 31]
+let months = [
+  {'name': 'january', 'days': 31, 'holidays': [{'date':'1', 'event': 'newyear', 'url': 'https://i.ibb.co/4fd1Y6Z/confetti.png'}]},
+  {'name': 'february', 'days': februaryDays, 'holidays': [{'date': '14', 'event': 'valentine', 'url':'https://i.ibb.co/vPyr7fv/lover-2.png'}]},
+  {'name': 'march', 'days': 31, 'holidays': []},
+  {'name': 'april', 'days': 30, 'holidays': [{'date':'5', 'event': 'easter', 'url':'https://i.ibb.co/yn4bK70/easter-egg.png'}]},
+  {'name': 'may', 'days':31, 'holidays': [{'date':'3', 'event':'maybank1', 'url':'https://i.ibb.co/yBJqTXs/cocktail-drink.png'}, {'date':'31', 'event':'maybank2', 'url': 'https://i.ibb.co/v3nRwDZ/surfboard.png'}]},
+  {'name': 'june', 'days':30,'holidays': []},
+  {'name': 'july', 'days':31, 'holidays': [{'date':'4', 'event':'usa', 'url': 'https://i.ibb.co/KyJS759/usa.png'}]},
+  {'name': 'august', 'days':31, 'holidays': [{'date':'30', 'event': 'augustbank', 'url': 'https://i.imgur.com/dNuAWYk.png', 'author': 'Smashicons'}]},
+  {'name': 'september', 'days':30,'holidays': []},
+  {'name': 'october', 'days':31,'holidays': [{'date':'31', 'event': 'pumpkin', 'url':'https://i.ibb.co/rx0Bchd/pumpkin.png'}]},
+  {'name': 'november', 'days':30,'holidays': [{'date':'26', 'event': 'turkey', 'url': 'https://i.ibb.co/VD8Q2bb/turkey.png'}]},
+  {'name': 'december', 'days':31,'holidays': [{'date':'25', 'event': 'xmas', 'url': 'https://i.ibb.co/fNPwjrY/christmas-wreath.png', 'author': 'iconixar'}]}
 ]
 
-const spaceMonthYear = months[thisMonth][0].length < 5 ? 40: 10 
+const spaceMonthYear = months[thisMonth].name.length < 5 ? 40: 10 
 
 // Choose Sunday first wkdays[0] or Monday first
 const weekDays = [
@@ -100,14 +73,14 @@ let wkDayFirst = weekDays[1]
 let mondayOffset = wkDayFirst[0] ? firstWkdayOfMonth - 1 : firstWkdayOfMonth
 if (mondayOffset < 0) {mondayOffset = 6}
 let prevMonth = ((thisMonth - 1) < 0) ? 11 : (thisMonth - 1)
-let prevMonthTotalDays = months[prevMonth][1]
+let prevMonthTotalDays = months[prevMonth].days
 let prevMonthDays = []
 
 for (let i = 0; i < mondayOffset; i++) {
   prevMonthDays.push(prevMonthTotalDays - i)
 }
 let showPrevMdays = prevMonthDays.reverse()
-let daysInMonth = months[thisMonth][1]
+let daysInMonth = months[thisMonth].days
 
 let widget = new ListWidget()
 widget.setPadding(0, 7, 0, 0)
@@ -116,7 +89,7 @@ widget.backgroundColor = new Color('#fff', 1)
 
 let monthYearRow = widget.addStack()
 monthYearRow.layoutHorizontally()
-let monthTxt = monthYearRow.addText(months[thisMonth][0].toUpperCase())
+let monthTxt = monthYearRow.addText(months[thisMonth].name.toUpperCase())
 monthTxt.textColor = monthColor
 monthYearRow.addSpacer(spaceMonthYear)
 let yearTxt = monthYearRow.addText(thisYear.toString())
@@ -141,129 +114,72 @@ row4 = widget.addStack()
 row5 = widget.addStack()
 row6 = widget.addStack()
 
-let isSpecial = holidays.hasOwnProperty(thisMonth.toString())
-
 let dayOne = 1
 
 let strThisMonth = thisMonth.toString()
 
-for (let i = 0; i < 37; i++) {
+let hasHolidays = months[thisMonth].holidays
+
+for (let i = 0; i < daysInMonth + mondayOffset; i++) {
   if (i < mondayOffset) {
-    addDaysRow(showPrevMdays[i].toString(), dayXColor, row1)
+    addDaysRow(showPrevMdays[i].toString(), dayXColor, row1, img=false, prev=true)
     row1.addSpacer(spaceDays)
     dayOne--
-  } 
+  }
   else {
     let strDayOne = dayOne.toString()
-    if (isSpecial) {
-      if (i < 7) {
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row1, holidayImg)
-        }
-        else {
-          addDaysRow(strDayOne, dayColor, row1)
-        }
-        row1.addSpacer(spaceDays)
-      }
-      else if (i < 14) {
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row2, holidayImg)
-        }
-        else {
-          addDaysRow(strDayOne, dayColor, row2)
-        }
-        row2.addSpacer(spaceDays)
-      }
-      else if (i < 21) {
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row3, holidayImg)
-        }
-        else {
-          addDaysRow(strDayOne, dayColor, row3)
-        }
-        row3.addSpacer(spaceDays)
-      }
-      else if (i < 28){
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row4, holidayImg)
-        }
-        else {
-          addDaysRow(strDayOne, dayColor, row4)
-        }
-        row4.addSpacer(spaceDays)
-      }
-      else if (i < 35) {
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row5, holidayImg)
-        }
-        else {
-          if (dayOne <= daysInMonth) {
-            addDaysRow(strDayOne, dayColor, row5)
-            row5.addSpacer(spaceDays)
-          }
-        }
-      }
-      else if (i < 31 + mondayOffset) {
-        var holidayUrl = holidays[strThisMonth].filter(holidayObj => holidayObj.date === strDayOne);
-        if (typeof(holidayUrl[0]) != 'undefined') {
-          let holidayImg = await getBG(holidayUrl[0].url)
-          addDaysRow(strDayOne, Color.darkGray(), row6, holidayImg)
-        }
-        else {
-          addDaysRow(strDayOne, dayColor, row6)
-        }
-        row6.addSpacer(spaceDays)
-      }
+    if (i < 7) {
+      makeHoliday(strDayOne, row1)
+      row1.addSpacer(spaceDays)
+    }
+    else if (i < 14) {
+      makeHoliday(strDayOne, row2)
+      row2.addSpacer(spaceDays)
+    }
+    else if (i < 21) {
+      makeHoliday(strDayOne, row3)
+      row3.addSpacer(spaceDays)
+    }
+    else if (i < 28){
+      makeHoliday(strDayOne, row4)
+      row4.addSpacer(spaceDays)
+    }
+    else if (i < 28+7) {
+      makeHoliday(strDayOne, row5)
+      row5.addSpacer(spaceDays)
     }
     else {
-      let strDayOne = dayOne.toString()
-      if (i < 7) {
-        addDaysRow(strDayOne, dayColor, row1)
-      }
-      else if (i < 14) {
-        addDaysRow(strDayOne, dayColor, row2)
-      }
-      else if (i < 21) {
-        addDaysRow(strDayOne, dayColor, row3)
-      }
-      else if (i < 28){
-        addDaysRow(strDayOne, dayColor, row4)
-      }
-      else if (i < 35) {
-        if (dayOne <= daysInMonth) {
-          addDaysRow(strDayOne, dayColor, row5)
-        }
-      }
-      else if (i < 31 + mondayOffset) {
-        addDaysRow(strDayOne, dayColor, row6)
-      }
+      makeHoliday(strDayOne, row6)
+      row6.addSpacer(spaceDays)
     }
   }
   dayOne++
 }
 
-function addDaysRow(dayNum, color, row, img=false) {
+async function makeHoliday (strDay, row) {
+  let holidayImgInfo = months[strThisMonth].holidays.filter(holidayObj => holidayObj.date === strDay);
+  let hasEvent = holidayImgInfo[0]
+  if (hasEvent === undefined){
+    addDaysRow(strDay, dayColor, row)
+  }
+  else {
+    let holidayImg = await getImage(holidayImgInfo[0].url, holidayImgInfo[0].event)
+    addDaysRow(strDay, Color.darkGray(), row, holidayImg)
+  }
+}
+
+function addDaysRow(dayNum, color, row, img=false, prev=false) {
   let s = row.addStack()
   s.layoutHorizontally()
   s.size = new Size(15, 15)
 
-  if (dayNum == thisDayDate) {
+  if (dayNum == thisDayDate && !prev && !img) {
     const highlightedDate = dayHighlight(dayNum, todayColor, todayHilite)
     s.addImage(highlightedDate);
   } 
   else if (img) {
-    let holimg = daySpecial(dayNum, color, img)
-    s.addImage(holimg)
+    let holidayImg = daySpecial(dayNum, color, img)
+    s.addImage(holidayImg)
   }
   else {
     let dayShow = s.addText(dayNum)
@@ -283,7 +199,7 @@ function dayHighlight(day, dayColor, hilite) {
   drawToday.size = new Size(size, size);
   drawToday.opaque = false;
   drawToday.setFillColor(hilite);
-  drawToday.fillEllipse(new Rect(2, 0, size - 3, size - 3));
+  drawToday.fillEllipse(new Rect(2, 0, size-2, size-2));
   drawToday.setFont(new Font('verdana', 25));
   drawToday.setTextAlignedCenter();
   drawToday.setTextColor(dayColor);
@@ -296,7 +212,7 @@ function daySpecial(day, spColor, img) {
   const drawSpecial = new DrawContext();
   const size = 35;
   drawSpecial.size = new Size(size, size);
-  drawSpecial.opaque = false;
+//   drawSpecial.opaque = false;
   drawSpecial.setFont(new Font('verdana', 25));
   drawSpecial.setTextAlignedCenter();
   drawSpecial.drawImageInRect(img, new Rect(0, 0, size, size))
